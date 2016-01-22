@@ -1,0 +1,8 @@
+﻿
+* text=auto
+
+[attr]utf16 diff merge -crlf
+[attr]binmode -crlf -diff -merge
+
+*.MF            eol=lf
+**/src/*.properties    eol=lf

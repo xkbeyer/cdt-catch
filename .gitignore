@@ -1,0 +1,14 @@
+# eclipse files
+**/.settings
+**/bin
+**/.metadata
+
+# backup files
+**/*.orig
+**/*.bak
+**/*~
+
+# others
+tt
+*.txt
+*.html
