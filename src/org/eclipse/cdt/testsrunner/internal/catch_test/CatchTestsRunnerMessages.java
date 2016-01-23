@@ -26,7 +26,7 @@ package org.eclipse.cdt.testsrunner.internal.catch_test;
 import org.eclipse.osgi.util.NLS;
 
 public class CatchTestsRunnerMessages extends NLS {
-	private static final String BUNDLE_NAME = "org.eclipse.cdt.testsrunner.internal.catch.CatchTestsRunnerMessages"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME = "org.eclipse.cdt.testsrunner.internal.catch_test.CatchTestsRunnerMessages"; //$NON-NLS-1$
 	public static String CatchTestsRunner_error_format;
 	public static String CatchTestsRunner_io_error_prefix;
 	public static String CatchTestsRunner_wrong_tests_paths_count;

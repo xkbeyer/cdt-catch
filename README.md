@@ -12,8 +12,9 @@ TDB
 
 Status
 ======
-Alpha, the scaffold exist.
+Alpha: first simple test cases are running.
 
-|Eclipse Version| 4.5 (Mars)|
+|Product        | Version   |
 |---------------|-----------|
+|Eclipse Version| 4.5 (Mars)|
 |CDT Version    | 8.8       |

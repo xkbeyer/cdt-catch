@@ -29,19 +29,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.eclipse.cdt.testsrunner.launcher.ITestsRunnerProvider;
-import org.eclipse.cdt.testsrunner.model.ITestItem.Status;
-import org.eclipse.cdt.testsrunner.model.ITestMessage;
 import org.eclipse.cdt.testsrunner.model.ITestModelUpdater;
 import org.eclipse.cdt.testsrunner.model.TestingException;
-import org.xml.sax.SAXException;
 
 /**
  * The Tests Runner provider plug-in to run tests with Catch.Test framework.
@@ -59,7 +50,7 @@ public class CatchTestsRunnerProvider implements ITestsRunnerProvider {
 		String[] result = catchParameters;
 		
 		// Build tests filter
-		if (testPaths != null ) {
+		if (testPaths != null && testPaths.length != 0) {
 			throw new TestingException(CatchTestsRunnerMessages.CatchTestsRunner_wrong_tests_paths_count);
 		}
 		return result;
