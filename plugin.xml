@@ -5,9 +5,9 @@
          point="org.eclipse.cdt.testsrunner.TestsRunner">
       <runner
             class="org.eclipse.cdt.testsrunner.internal.catch_test.CatchTestsRunnerProvider"
-            description="%CatchTestsRunner.description"
+            description="Tests runner for a test module based on Catch Test"
             id="org.eclipse.cdt.testsrunner.catch_test"
-            name="%CatchTestsRunner.name">
+            name="Catch Tests Runner">
       </runner>
    </extension>
 
