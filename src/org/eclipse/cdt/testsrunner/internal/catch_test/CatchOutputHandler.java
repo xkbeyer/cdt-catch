@@ -85,22 +85,23 @@ public class CatchOutputHandler {
 	 * <p>
 	 * @return false either the end of input is found or the tokens can't be matched. 
 	 * @throws IOException
+	 * @throws TestingException 
 	 *
 	 */
-	private boolean searchHeader() throws IOException
+	private void searchHeader() throws IOException, TestingException
 	{
-		boolean endOfInput = firstNonEmptyLine() == false;
-		if( endOfInput ) return false;
+		if( !firstNonEmptyLine() ) 
+			throw new TestingException("Unexpected End of input stream.");
 		
 		Matcher m = TILDE_PATTERN.matcher(line);
 		if (m.matches()) {
 			line = reader.readLine();
 			if ((m = VERSION_PATTERN.matcher(line)).matches()) {
 				line = reader.readLine(); // Run with ...
-				return true;
+				return;
 			}
 		}
-		return false;
+		throw new TestingException("Failed to find the test header lines.");
 	}
 	
 	/**
@@ -112,12 +113,13 @@ public class CatchOutputHandler {
 	 * <p>
 	 * @return false either the end of input is found or the tokens can't be matched. 
 	 * @throws IOException 
+	 * @throws TestingException 
 	 *
 	 */
-	private boolean searchTestCase() throws IOException
+	private void searchTestCase() throws IOException, TestingException
 	{
-		boolean endOfInput = firstNonEmptyLine() == false;
-		if( endOfInput ) return false;
+		if( !firstNonEmptyLine() ) 
+			throw new TestingException("Unexpected End of input stream.");
 
 		Matcher m = MINUS_PATTERN.matcher(line);
 		if (m.matches()) {
@@ -126,10 +128,11 @@ public class CatchOutputHandler {
 			line = reader.readLine();
 			m = MINUS_PATTERN.matcher(line);
 			if (m.matches()) {
-				return searchTestCaseFileInfo();
+				searchTestCaseFileInfo();
+				return;
 			}
 		}
-		return false;
+		throw new TestingException("Failed to find the test case name lines.");
 	}
 
 	/**
@@ -167,14 +170,13 @@ public class CatchOutputHandler {
 		return ms.intValue();
 	}
 
-	public void run() throws IOException
+	public void run() throws IOException, TestingException
 	{
 		State state = State.Init;
 		String[] fileAndLine = null;
 
-		if (!searchHeader()) {
-			return;
-		}
+		searchHeader();
+		
 		state = State.TestCase;
 		
 		while (nextNonEmptyLine()) {
@@ -192,9 +194,8 @@ public class CatchOutputHandler {
 			}
 			switch( state ) {
 			case TestCase:
-				if( searchTestCase() ) {
-					state = State.TestCaseResults;
-				}
+				searchTestCase();
+				state = State.TestCaseResults;
 				break;
 			case TestCaseResults:
 				fileAndLine = line.split(":");
@@ -211,7 +212,7 @@ public class CatchOutputHandler {
 						modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, line);
 					}
 				} else {
-					// TODO Error handling
+					throw new TestingException("Unexpected input while parsing test case result.");
 				}
 				line = reader.readLine();
 				if( !line.isEmpty() ) {
@@ -222,7 +223,7 @@ public class CatchOutputHandler {
 				}
 				break;
 				default:
-					return;
+					throw new TestingException("Unexpected input while parsing test case result.");
 			}
 		}
 	}
