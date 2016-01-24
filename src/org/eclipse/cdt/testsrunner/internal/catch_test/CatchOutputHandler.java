@@ -40,11 +40,11 @@ import org.eclipse.cdt.testsrunner.model.ITestItem.Status;
  *
  */
 public class CatchOutputHandler {
-	private final Pattern TILDE_PATTERN = Pattern.compile("^~*", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern TILDE_PATTERN = Pattern.compile("^~{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 	private final Pattern VERSION_PATTERN = Pattern.compile(".+Catch\\s+v\\d+(\\.\\d+){2}.*", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
-	private final Pattern MINUS_PATTERN = Pattern.compile("^-*", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
-	private final Pattern DOTS_PATTERN = Pattern.compile("^\\.*", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
-	private final Pattern EQUAL_PATTERN = Pattern.compile("^=*", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern MINUS_PATTERN = Pattern.compile("^-{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern DOTS_PATTERN = Pattern.compile("^\\.{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern EQUAL_PATTERN = Pattern.compile("^={79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 	private final Pattern COMPL_DURATION_PATTERN = Pattern.compile("^Completed in (\\d+)(\\.\\d+)?(e-\\d+)?s", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 
 	private ITestModelUpdater modelUpdater = null;
