@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.cdt.testsrunner.model.ITestMessage;
 import org.eclipse.cdt.testsrunner.model.ITestModelUpdater;
+import org.eclipse.cdt.testsrunner.model.TestingException;
 import org.eclipse.cdt.testsrunner.model.ITestItem.Status;
 
 /**
@@ -48,81 +49,107 @@ public class CatchOutputHandler {
 
 	private ITestModelUpdater modelUpdater = null;
 	private BufferedReader    reader = null;
+	private String            line = "";
+	enum State { Init, TestCase, TestCaseResults };
 	
 	public CatchOutputHandler(BufferedReader input,ITestModelUpdater modelUpdater) {
 		this.modelUpdater = modelUpdater;
 		this.reader = input;
 	}
 	
+	private boolean firstNonEmptyLine() throws IOException
+	{
+		while(line != null && line.isEmpty() ) {
+			line = reader.readLine();
+		}
+		return line == null ? false : true;
+	}
+
+	private boolean nextNonEmptyLine() throws IOException
+	{
+		line = reader.readLine();
+		while(line != null && line.isEmpty() ) {
+			line = reader.readLine();
+		}
+		return line == null ? false : true;
+	}
+	
 	/**
-	 *  Search the header
+	 * Search the header
+	 * 
+	 * The header has the following lines:
+	 * <pre>
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 * xxxxx ix a Catch vm.n.o host application
-	 * Run with ....
-	 * @throws IOException 
+	 * Run with -? for options
+	 * <p>
+	 * @return false either the end of input is found or the tokens can't be matched. 
+	 * @throws IOException
 	 *
 	 */
-	private boolean searchHeader(String line) throws IOException
+	private boolean searchHeader() throws IOException
 	{
-		int state = 0 ;
-		do {
-			if( line.isEmpty() ) 
-				continue;
-			Matcher m;
-			if (state == 0) {
-				if ((m = TILDE_PATTERN.matcher(line)).matches()) {
-					state = 1;
-				}
-			} else if ((m = VERSION_PATTERN.matcher(line)).matches()) {
+		boolean endOfInput = firstNonEmptyLine() == false;
+		if( endOfInput ) return false;
+		
+		Matcher m = TILDE_PATTERN.matcher(line);
+		if (m.matches()) {
+			line = reader.readLine();
+			if ((m = VERSION_PATTERN.matcher(line)).matches()) {
+				line = reader.readLine(); // Run with ...
 				return true;
 			}
-		} while( (line = reader.readLine()) != null );
+		}
 		return false;
 	}
 	
 	/**
 	 *  Search the test case header
+	 * <pre>
 	 * -----------------------------
 	 * Test case name
 	 * -----------------------------
+	 * <p>
+	 * @return false either the end of input is found or the tokens can't be matched. 
 	 * @throws IOException 
 	 *
 	 */
-	private boolean searchTestCase(String line) throws IOException
+	private boolean searchTestCase() throws IOException
 	{
-		int state = 0 ;
-		do {
-			if( line.isEmpty() ) 
-				continue;
-			Matcher m;
-			if ((m = MINUS_PATTERN.matcher(line)).matches()) {
-				if( state == 0 ) {
-					line = reader.readLine();
-					modelUpdater.enterTestCase(line);
-					state = 1;
-				} else if( state == 1 ) {
-					return true;
-				}
+		boolean endOfInput = firstNonEmptyLine() == false;
+		if( endOfInput ) return false;
+
+		Matcher m = MINUS_PATTERN.matcher(line);
+		if (m.matches()) {
+			line = reader.readLine();
+			modelUpdater.enterTestCase(line);
+			line = reader.readLine();
+			m = MINUS_PATTERN.matcher(line);
+			if (m.matches()) {
+				return searchTestCaseFileInfo();
 			}
-		} while( (line = reader.readLine()) != null );
+		}
 		return false;
 	}
 
 	/**
 	 *  Search the test case file location
-	 * 
+	 * <pre>
 	 * path/filename.ext:line:
 	 * .............................
+	 * <p>
+	 * @return false if the tokens can't be matched. 
 	 * @throws IOException 
 	 *
 	 */
-	private boolean searchTestCaseFileInfo(String line) throws IOException
+	private boolean searchTestCaseFileInfo() throws IOException
 	{
+		line = reader.readLine();
 		String[] fileAndLine = line.split(":");
 		modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Message, "Start of test case.");
 		line = reader.readLine();
-		Matcher m;
-		if ((m = DOTS_PATTERN.matcher(line)).matches()) {
+		Matcher m = DOTS_PATTERN.matcher(line);
+		if (m.matches()) {
 			return true;
 		}
 		return false;
@@ -142,43 +169,34 @@ public class CatchOutputHandler {
 
 	public void run() throws IOException
 	{
-		String line;
-		int state = 0;
+		State state = State.Init;
 		String[] fileAndLine = null;
-		while ((line = reader.readLine()) != null) {
-			if (line.isEmpty())
-				continue;
+
+		if (!searchHeader()) {
+			return;
+		}
+		state = State.TestCase;
+		
+		while (nextNonEmptyLine()) {
 			Matcher m;
 			if ((m = EQUAL_PATTERN.matcher(line)).matches()) {
-				//modelUpdater.addTestMessage(null, 0, ITestMessage.Level.Message, "Finished.");
 				return;
-			}
-			if (state == 0) {
-				if (searchHeader(line)) {
-					state = 1;
-				}
-				continue;
-			}
-			if (state == 1) {
-				if( searchTestCase(line) ) {
-					state = 2;
-				}
-				continue;
-			}
-			if (state == 2) {
-				if( searchTestCaseFileInfo(line) ) {
-					state = 3;
-				}
-				continue;
 			}
 			if ((m = COMPL_DURATION_PATTERN.matcher(line)).matches()) {
 				// The format is s.ms
 				int testTime = toMilliseconds(m.group(1), m.group(2), m.group(3)); 
 				modelUpdater.setTestingTime(testTime); // Will have in milliseconds
 				modelUpdater.exitTestCase();
-				state = 1;
+				state = State.TestCase;
+				continue;
 			}
-			if (state == 3) {
+			switch( state ) {
+			case TestCase:
+				if( searchTestCase() ) {
+					state = State.TestCaseResults;
+				}
+				break;
+			case TestCaseResults:
 				fileAndLine = line.split(":");
 				if (fileAndLine.length == 3) {
 					if( fileAndLine[2].contains("FAILED")) {
@@ -202,7 +220,9 @@ public class CatchOutputHandler {
 					String extraline = line + reader.readLine();
 					modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, extraline);
 				}
-				continue;
+				break;
+				default:
+					return;
 			}
 		}
 	}
