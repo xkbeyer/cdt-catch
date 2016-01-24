@@ -50,6 +50,9 @@ public class CatchOutputHandler {
 	private ITestModelUpdater modelUpdater = null;
 	private BufferedReader    reader = null;
 	private String            line = "";
+	private String            fileName = "";
+	private String            testCaseName = "";
+	
 	enum State { Init, TestCase, TestCaseResults };
 	
 	public CatchOutputHandler(BufferedReader input,ITestModelUpdater modelUpdater) {
@@ -124,7 +127,7 @@ public class CatchOutputHandler {
 		Matcher m = MINUS_PATTERN.matcher(line);
 		if (m.matches()) {
 			line = reader.readLine();
-			modelUpdater.enterTestCase(line);
+			testCaseName = line;
 			line = reader.readLine();
 			m = MINUS_PATTERN.matcher(line);
 			if (m.matches()) {
@@ -149,10 +152,16 @@ public class CatchOutputHandler {
 	{
 		line = reader.readLine();
 		String[] fileAndLine = line.split(":");
-		modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Message, "Start of test case.");
+		if( fileName != fileAndLine[0] ) {
+			if( !fileName.isEmpty() )
+				modelUpdater.exitTestSuite();
+			fileName = fileAndLine[0];
+			modelUpdater.enterTestSuite(fileAndLine[0]);
+		}
 		line = reader.readLine();
 		Matcher m = DOTS_PATTERN.matcher(line);
 		if (m.matches()) {
+			modelUpdater.enterTestCase(testCaseName);
 			return true;
 		}
 		return false;
@@ -222,8 +231,8 @@ public class CatchOutputHandler {
 					modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, extraline);
 				}
 				break;
-				default:
-					throw new TestingException("Unexpected input while parsing test case result.");
+			default:
+				throw new TestingException("Unexpected input while parsing test case result.");
 			}
 		}
 	}
