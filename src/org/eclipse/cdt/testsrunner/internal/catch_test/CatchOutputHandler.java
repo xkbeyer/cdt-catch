@@ -138,12 +138,14 @@ public class CatchOutputHandler {
 		if (m.matches()) {
 			nextLine();
 			testCaseName = line;
-			nextLine();
-			m = MINUS_PATTERN.matcher(line);
-			if (m.matches()) {
-				searchTestCaseFileInfo();
-				return;
-			}
+			do {
+				nextLine();
+				m = MINUS_PATTERN.matcher(line);
+				if (m.matches()) {
+					searchTestCaseFileInfo();
+					return;
+				} 
+			} while(line != null);
 		}
 		throw new TestingException("Failed to find the test case name lines.");
 	}
