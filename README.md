@@ -4,17 +4,28 @@ A plug in to run the catch (https://github.com/philsquared/Catch) test framework
 
 Installation
 ============
-TBD
+Currently the plug in must be installed manually. To do this copy the `catch-test.jar` into the eclipse dropins folder. Hereafter start eclipse in a clean mode to refresh the installation.
 
-Usage
-=====
-TDB
+For example:
+
+```
+cp catch-tester.jar <path/to/eclipse>/dropins
+eclipse -clean
+```
+If you need root privilegs (eclipse is installed in /usr/lib/eclipse) then prepend the sudo command.
+
+Now the "Catch Tests Runner" should be selectable in the C++ Unit Test Run Configuration.
+
+*Hint: Runs only with java version 1.8*
+
 
 Status
 ======
-Alpha: first simple test cases are running.
+Alpha: first simple test cases are running. Tested with eclipse running on a Windows machine.
+
 
 |Product        | Version   |
 |---------------|-----------|
 |Eclipse Version| 4.5 (Mars)|
 |CDT Version    | 8.8       |
+|java           | 1.8       |
