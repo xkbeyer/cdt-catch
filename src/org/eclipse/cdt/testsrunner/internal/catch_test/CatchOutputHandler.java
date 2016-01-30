@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.cdt.testsrunner.model.ITestMessage;
 import org.eclipse.cdt.testsrunner.model.ITestModelUpdater;
+import org.eclipse.cdt.testsrunner.model.ITestSuite;
 import org.eclipse.cdt.testsrunner.model.TestingException;
 import org.eclipse.cdt.testsrunner.model.ITestItem.Status;
 
@@ -200,6 +201,10 @@ public class CatchOutputHandler {
 		while (nextNonEmptyLine()) {
 			Matcher m;
 			if ((m = EQUAL_PATTERN.matcher(line)).matches()) {
+				ITestSuite suite = modelUpdater.currentTestSuite();
+				if( suite != null) {
+					modelUpdater.exitTestSuite();
+				}
 				return;
 			}
 			if ((m = COMPL_DURATION_PATTERN.matcher(line)).matches()) {
