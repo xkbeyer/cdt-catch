@@ -6,3 +6,4 @@
 
 *.MF            eol=lf
 **/src/*.properties    eol=lf
+*.jar	binary
