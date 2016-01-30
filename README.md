@@ -21,7 +21,7 @@ Now the "Catch Tests Runner" should be selectable in the C++ Unit Test Run Confi
 
 Status
 ======
-Alpha: first simple test cases are running. Tested with eclipse running on a Windows machine.
+Alpha: first simple test cases are running. Tested with eclipse running on a Windows and linux machine.
 
 
 |Product        | Version   |

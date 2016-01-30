@@ -42,9 +42,9 @@ import org.eclipse.cdt.testsrunner.model.ITestItem.Status;
 public class CatchOutputHandler {
 	private final Pattern TILDE_PATTERN = Pattern.compile("^~{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 	private final Pattern VERSION_PATTERN = Pattern.compile(".+Catch\\s+v\\d+(\\.\\d+){2}.*", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
-	private final Pattern MINUS_PATTERN = Pattern.compile("^-{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
-	private final Pattern DOTS_PATTERN = Pattern.compile("^\\.{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
-	private final Pattern EQUAL_PATTERN = Pattern.compile("^={79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern MINUS_PATTERN = Pattern.compile(".*-{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern DOTS_PATTERN = Pattern.compile(".*\\.{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern EQUAL_PATTERN = Pattern.compile(".*={2,79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 	private final Pattern COMPL_DURATION_PATTERN = Pattern.compile("^Completed in (\\d+)(\\.\\d+)?(e-\\d+)?s", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 
 	private ITestModelUpdater modelUpdater = null;
@@ -63,18 +63,27 @@ public class CatchOutputHandler {
 	private boolean firstNonEmptyLine() throws IOException
 	{
 		while(line != null && line.isEmpty() ) {
-			line = reader.readLine();
+			nextLine();
 		}
 		return line == null ? false : true;
 	}
 
 	private boolean nextNonEmptyLine() throws IOException
 	{
-		line = reader.readLine();
+		nextLine();
 		while(line != null && line.isEmpty() ) {
-			line = reader.readLine();
+			nextLine();
 		}
 		return line == null ? false : true;
+	}
+
+	private void nextLine() throws IOException
+	{
+		String newline = reader.readLine();
+		if( newline != null )
+			line = newline.replaceAll("\\[(\\d)(;)?(\\d+)?m", "");
+		else 
+			line = newline;
 	}
 	
 	/**
@@ -98,9 +107,9 @@ public class CatchOutputHandler {
 		
 		Matcher m = TILDE_PATTERN.matcher(line);
 		if (m.matches()) {
-			line = reader.readLine();
+			nextLine();
 			if ((m = VERSION_PATTERN.matcher(line)).matches()) {
-				line = reader.readLine(); // Run with ...
+				nextLine(); // Run with ...
 				return;
 			}
 		}
@@ -126,9 +135,9 @@ public class CatchOutputHandler {
 
 		Matcher m = MINUS_PATTERN.matcher(line);
 		if (m.matches()) {
-			line = reader.readLine();
+			nextLine();
 			testCaseName = line;
-			line = reader.readLine();
+			nextLine();
 			m = MINUS_PATTERN.matcher(line);
 			if (m.matches()) {
 				searchTestCaseFileInfo();
@@ -150,15 +159,15 @@ public class CatchOutputHandler {
 	 */
 	private boolean searchTestCaseFileInfo() throws IOException
 	{
-		line = reader.readLine();
+		nextLine();
 		String[] fileAndLine = line.split(":");
 		if( fileName != fileAndLine[0] ) {
 			if( !fileName.isEmpty() )
 				modelUpdater.exitTestSuite();
 			fileName = fileAndLine[0];
-			modelUpdater.enterTestSuite(fileAndLine[0]);
+			modelUpdater.enterTestSuite(fileName);
 		}
-		line = reader.readLine();
+		nextLine();
 		Matcher m = DOTS_PATTERN.matcher(line);
 		if (m.matches()) {
 			modelUpdater.enterTestCase(testCaseName);
@@ -212,22 +221,24 @@ public class CatchOutputHandler {
 					if( fileAndLine[2].contains("FAILED")) {
 						// FAILED
 						modelUpdater.setTestStatus(Status.Failed);
-						line = reader.readLine(); // assertion
+						nextLine(); // assertion
 						modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Error, line);
 					} else {
 						modelUpdater.setTestStatus(Status.Passed);
-						line = reader.readLine(); // PASSED:
-						line = reader.readLine(); // assertion
+						nextLine(); // PASSED:
+						nextLine(); // assertion
 						modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, line);
 					}
 				} else {
 					throw new TestingException("Unexpected input while parsing test case result.");
 				}
-				line = reader.readLine();
+				nextLine();
 				if( !line.isEmpty() ) {
 					// with expansion:
 					// a == b 
-					String extraline = line + reader.readLine();
+					String extraline = line;
+					nextLine();
+					extraline += line;
 					modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, extraline);
 				}
 				break;
