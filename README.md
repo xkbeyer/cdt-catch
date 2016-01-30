@@ -6,8 +6,6 @@ Installation
 ============
 Currently the plug in must be installed manually. To do this copy the `catch-test.jar` into the eclipse dropins folder. Hereafter start eclipse in a clean mode to refresh the installation.
 
-For example:
-
 ```
 cp catch-tester.jar <path/to/eclipse>/dropins
 eclipse -clean
@@ -23,9 +21,10 @@ Status
 ======
 Alpha: first simple test cases are running. Tested with eclipse running on a Windows and linux machine.
 
+`SECTION` and the BDD-style tests are not supported, yet.
 
-|Product        | Version   |
-|---------------|-----------|
-|Eclipse Version| 4.5 (Mars)|
-|CDT Version    | 8.8       |
-|java           | 1.8       |
+|Product | Version   |
+|--------|-----------|
+|Eclipse | 4.5 (Mars)|
+|CDT     | 8.8       |
+|java    | 1.8       |
