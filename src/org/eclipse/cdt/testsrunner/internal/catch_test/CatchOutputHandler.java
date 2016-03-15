@@ -53,6 +53,7 @@ public class CatchOutputHandler {
 	private String            line = "";
 	private String            fileName = "";
 	private String            testCaseName = "";
+	private int               failedTest = 0;
 	
 	enum State { Init, TestCase, TestCaseResults };
 	
@@ -138,6 +139,7 @@ public class CatchOutputHandler {
 		if (m.matches()) {
 			nextLine();
 			testCaseName = line;
+			failedTest =  0;
 			do {
 				nextLine();
 				m = MINUS_PATTERN.matcher(line);
@@ -197,11 +199,17 @@ public class CatchOutputHandler {
 		if (fileAndLine.length == 3) {
 			if( fileAndLine[2].contains("FAILED")) {
 				// FAILED
+				failedTest++;
 				modelUpdater.setTestStatus(Status.Failed);
 				nextLine(); // assertion
 				modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Error, line);
 			} else {
-				modelUpdater.setTestStatus(Status.Passed);
+				// As long as no failed test is detected set the passed attribute.
+				// The model takes the last set as the global result. In order not
+				// to have the test case as passed if one has failed avoid further set to passed.
+				if( failedTest == 0 ) {
+					modelUpdater.setTestStatus(Status.Passed);
+				}
 				nextLine(); // PASSED:
 				nextLine(); // assertion
 				modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, line);
