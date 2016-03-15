@@ -191,10 +191,38 @@ public class CatchOutputHandler {
 		return ms.intValue();
 	}
 
+	private void parseTestCaseResults() throws IOException, TestingException
+	{
+		String[] fileAndLine = line.split(":");
+		if (fileAndLine.length == 3) {
+			if( fileAndLine[2].contains("FAILED")) {
+				// FAILED
+				modelUpdater.setTestStatus(Status.Failed);
+				nextLine(); // assertion
+				modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Error, line);
+			} else {
+				modelUpdater.setTestStatus(Status.Passed);
+				nextLine(); // PASSED:
+				nextLine(); // assertion
+				modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, line);
+			}
+		} else {
+			throw new TestingException("Unexpected input while parsing test case result.");
+		}
+		nextLine();
+		if( !line.isEmpty() ) {
+			// with expansion:
+			// a == b 
+			String extraline = line;
+			nextLine();
+			extraline += line;
+			modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, extraline);
+		}
+	}
+	
 	public void run() throws IOException, TestingException
 	{
 		State state = State.Init;
-		String[] fileAndLine = null;
 
 		searchHeader();
 		
@@ -218,39 +246,15 @@ public class CatchOutputHandler {
 				continue;
 			}
 			switch( state ) {
-			case TestCase:
-				searchTestCase();
-				state = State.TestCaseResults;
-				break;
-			case TestCaseResults:
-				fileAndLine = line.split(":");
-				if (fileAndLine.length == 3) {
-					if( fileAndLine[2].contains("FAILED")) {
-						// FAILED
-						modelUpdater.setTestStatus(Status.Failed);
-						nextLine(); // assertion
-						modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Error, line);
-					} else {
-						modelUpdater.setTestStatus(Status.Passed);
-						nextLine(); // PASSED:
-						nextLine(); // assertion
-						modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, line);
-					}
-				} else {
+				case TestCase:
+					searchTestCase();
+					state = State.TestCaseResults;
+					break;
+				case TestCaseResults:
+					parseTestCaseResults();
+					break;
+				default:
 					throw new TestingException("Unexpected input while parsing test case result.");
-				}
-				nextLine();
-				if( !line.isEmpty() ) {
-					// with expansion:
-					// a == b 
-					String extraline = line;
-					nextLine();
-					extraline += line;
-					modelUpdater.addTestMessage(fileAndLine[0], Integer.parseInt(fileAndLine[1]), ITestMessage.Level.Info, extraline);
-				}
-				break;
-			default:
-				throw new TestingException("Unexpected input while parsing test case result.");
 			}
 		}
 	}
