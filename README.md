@@ -19,12 +19,10 @@ Now the "Catch Tests Runner" should be selectable in the C++ Unit Test Run Confi
 
 Status
 ======
-Alpha: first simple test cases are running. Tested with eclipse running on a Windows and linux machine.
-
-`SECTION` and the BDD-style tests are not supported, yet.
+Beta: Tested with eclipse running on a Windows and Linux machine.
 
 |Product | Version   |
 |--------|-----------|
-|Eclipse | 4.5 (Mars)|
+|Eclipse | 4.5 (Mars), 4.6 (Neon)|
 |CDT     | 8.8       |
 |java    | 1.8       |
