@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Catch
 Bundle-SymbolicName: org.eclipse.cdt.testsrunner.catch_test;singleton:=true
-Bundle-Version: 1.0.1.qualifier
+Bundle-Version: 1.1.0
 Bundle-Activator: org.eclipse.cdt.testsrunner.internal.catch_test.CatchTestsRunnerPlugin
 Bundle-Vendor: xkbeyer
 Require-Bundle: org.eclipse.ui,

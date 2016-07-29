@@ -47,6 +47,7 @@ public class CatchOutputHandler {
 	private final Pattern DOTS_PATTERN = Pattern.compile(".*\\.{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 	private final Pattern EQUAL_PATTERN = Pattern.compile(".*={2,79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 	private final Pattern COMPL_DURATION_PATTERN = Pattern.compile("^Completed in (\\d+)(\\.\\d+)?(e-\\d+)?s", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern SECTION_COMPL_DURATION_PATTERN = Pattern.compile(".*completed in (\\d+)(\\.\\d+)?(e-\\d+)?s", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 
 	private ITestModelUpdater modelUpdater = null;
 	private BufferedReader    reader = null;
@@ -54,6 +55,7 @@ public class CatchOutputHandler {
 	private String            fileName = "";
 	private String            testCaseName = "";
 	private int               failedTest = 0;
+	private int               nestedSections = 0 ;
 	
 	enum State { Init, TestCase, TestCaseResults };
 	
@@ -123,6 +125,7 @@ public class CatchOutputHandler {
 	 * <pre>
 	 * -----------------------------
 	 * Test case name
+	 *    section name
 	 * -----------------------------
 	 * <p>
 	 * @return false either the end of input is found or the tokens can't be matched. 
@@ -135,6 +138,7 @@ public class CatchOutputHandler {
 		if( !firstNonEmptyLine() ) 
 			throw new TestingException("Unexpected End of input stream.");
 
+		nestedSections = 0 ;
 		Matcher m = MINUS_PATTERN.matcher(line);
 		if (m.matches()) {
 			nextLine();
@@ -146,7 +150,10 @@ public class CatchOutputHandler {
 				if (m.matches()) {
 					searchTestCaseFileInfo();
 					return;
-				} 
+				} else {
+					testCaseName += " : " + line;
+					nestedSections++;
+				}
 			} while(line != null);
 		}
 		throw new TestingException("Failed to find the test case name lines.");
@@ -245,14 +252,37 @@ public class CatchOutputHandler {
 				}
 				return;
 			}
+			
 			if ((m = COMPL_DURATION_PATTERN.matcher(line)).matches()) {
 				// The format is s.ms
-				int testTime = toMilliseconds(m.group(1), m.group(2), m.group(3)); 
-				modelUpdater.setTestingTime(testTime); // Will have in milliseconds
-				modelUpdater.exitTestCase();
-				state = State.TestCase;
+				if( nestedSections == 0) {
+					int testTime = toMilliseconds(m.group(1), m.group(2), m.group(3)); 
+					modelUpdater.setTestingTime(testTime); // Will have in milliseconds
+					modelUpdater.exitTestCase();
+					state = State.TestCase;
+				}
 				continue;
 			}
+
+			if ((m = SECTION_COMPL_DURATION_PATTERN.matcher(line)).matches()) {
+				// The format is s.ms
+				nestedSections--;
+				if( nestedSections == 0 ) {
+					int testTime = toMilliseconds(m.group(1), m.group(2), m.group(3)); 
+					modelUpdater.setTestingTime(testTime); // Will have in milliseconds
+					modelUpdater.exitTestCase();
+					state = State.TestCase;
+				}
+				continue;
+			}
+			
+			if ((m = MINUS_PATTERN.matcher(line)).matches() && state == State.TestCaseResults) {
+				// Then a Test section is in between (missing duration)
+				searchTestCase();
+				state = State.TestCaseResults;
+				continue;
+			}
+
 			switch( state ) {
 				case TestCase:
 					searchTestCase();
