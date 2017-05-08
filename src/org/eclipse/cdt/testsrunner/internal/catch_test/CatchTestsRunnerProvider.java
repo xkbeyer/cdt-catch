@@ -24,11 +24,10 @@
 
 package org.eclipse.cdt.testsrunner.internal.catch_test;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.MessageFormat;
+
+import javax.xml.bind.JAXBException;
 
 import org.eclipse.cdt.testsrunner.launcher.ITestsRunnerProvider;
 import org.eclipse.cdt.testsrunner.model.ITestModelUpdater;
@@ -36,47 +35,42 @@ import org.eclipse.cdt.testsrunner.model.TestingException;
 
 /**
  * The Tests Runner provider plug-in to run tests with Catch.Test framework.
- * 
+ *
  */
 public class CatchTestsRunnerProvider implements ITestsRunnerProvider {
 
 	@Override
-	public String[] getAdditionalLaunchParameters(String[][] testPaths) throws TestingException {
-		final String[] catchParameters = {
-			"--success", //$NON-NLS-1$
-			"--reporter console", //$NON-NLS-1$
-			"--durations yes" //$NON-NLS-1$
+	public String[] getAdditionalLaunchParameters(final String[][] testPaths) throws TestingException {
+		final String[] catchParameters = { "--success", //$NON-NLS-1$
+				"--reporter xml", //$NON-NLS-1$
+				"--durations yes" //$NON-NLS-1$
 		};
-		String[] result = catchParameters;
-		
+
 		// Build tests filter
 		if (testPaths != null && testPaths.length != 0) {
 			throw new TestingException(CatchTestsRunnerMessages.CatchTestsRunner_wrong_tests_paths_count);
 		}
-		return result;
+		return catchParameters;
 	}
-	
-    /**
-     * Construct the error message from prefix and detailed description.
-     *
-     * @param prefix prefix
-     * @param description detailed description
-     * @return the full message
-     */
-	private String getErrorText(String prefix, String description) {
+
+	/**
+	 * Construct the error message from prefix and detailed description.
+	 *
+	 * @param prefix
+	 *            prefix
+	 * @param description
+	 *            detailed description
+	 * @return the full message
+	 */
+	private String getErrorText(final String prefix, final String description) {
 		return MessageFormat.format(CatchTestsRunnerMessages.CatchTestsRunner_error_format, prefix, description);
 	}
-	
+
 	@Override
-	public void run(ITestModelUpdater modelUpdater, InputStream inputStream) throws TestingException {
+	public void run(final ITestModelUpdater modelUpdater, final InputStream inputStream) throws TestingException {
 		try {
-			InputStreamReader streamReader = new InputStreamReader(inputStream);
-			BufferedReader reader = new BufferedReader(streamReader);
-
-			CatchOutputHandler handler= new CatchOutputHandler(reader, modelUpdater);
-			handler.run();
-
-		} catch (IOException e) {
+			CatchXmlOutputHandler.run(inputStream, modelUpdater);
+		} catch (final JAXBException e) {
 			throw new TestingException(getErrorText(CatchTestsRunnerMessages.CatchTestsRunner_io_error_prefix, e.getMessage()));
 		}
 	}
