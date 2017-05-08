@@ -45,13 +45,12 @@ public class CatchTestsRunnerProvider implements ITestsRunnerProvider {
 				"--reporter xml", //$NON-NLS-1$
 				"--durations yes" //$NON-NLS-1$
 		};
-		final String[] result = catchParameters;
 
 		// Build tests filter
 		if (testPaths != null && testPaths.length != 0) {
 			throw new TestingException(CatchTestsRunnerMessages.CatchTestsRunner_wrong_tests_paths_count);
 		}
-		return result;
+		return catchParameters;
 	}
 
 	/**
