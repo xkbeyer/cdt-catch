@@ -46,8 +46,9 @@ public class CatchOutputHandler {
 	private final Pattern MINUS_PATTERN = Pattern.compile(".*-{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 	private final Pattern DOTS_PATTERN = Pattern.compile(".*\\.{79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 	private final Pattern EQUAL_PATTERN = Pattern.compile(".*={2,79}", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
-	private final Pattern COMPL_DURATION_PATTERN = Pattern.compile("^Completed in (\\d+)(\\.\\d+)?(e-\\d+)?s", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
-	private final Pattern SECTION_COMPL_DURATION_PATTERN = Pattern.compile(".*completed in (\\d+)(\\.\\d+)?(e-\\d+)?s", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
+	private final Pattern COMPL_DURATION_PATTERN = Pattern.compile("^Completed in (\\d+)(\\.\\d+)?(e-\\d+)?s", Pattern.CASE_INSENSITIVE);  //prior to Catch v1.8.0
+	private final Pattern SECTION_COMPL_DURATION_PATTERN = Pattern.compile(".*completed in (\\d+)(\\.\\d+)?(e-\\d+)?s", Pattern.CASE_INSENSITIVE);  //prior to Catch v1.8.0
+	private final Pattern DURATION_PATTERN = Pattern.compile("^(\\d+)(\\.\\d+)? s:\\s+([\\w:]+(\\s?\\w+)*)", Pattern.CASE_INSENSITIVE);  //$NON-NLS-1$
 
 	private ITestModelUpdater modelUpdater = null;
 	private BufferedReader    reader = null;
@@ -257,6 +258,17 @@ public class CatchOutputHandler {
 				// The format is s.ms
 				if( nestedSections == 0) {
 					int testTime = toMilliseconds(m.group(1), m.group(2), m.group(3)); 
+					modelUpdater.setTestingTime(testTime); // Will have in milliseconds
+					modelUpdater.exitTestCase();
+					state = State.TestCase;
+				}
+				continue;
+			}
+
+			// Beginning with Catch v1.8.0 the format has changed to "xxx.123 s: Test case name"
+			if ((m = DURATION_PATTERN.matcher(line)).matches()) {
+				if( (nestedSections == 0) && m.group(3).equals(testCaseName)) {
+					int testTime = toMilliseconds(m.group(1), m.group(2), null); 
 					modelUpdater.setTestingTime(testTime); // Will have in milliseconds
 					modelUpdater.exitTestCase();
 					state = State.TestCase;
