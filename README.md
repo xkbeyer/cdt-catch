@@ -4,10 +4,10 @@ A plug in to run the catch (https://github.com/philsquared/Catch) test framework
 
 Installation
 ============
-Currently the plug in must be installed manually. To do this, copy the `catch-test.jar` (see releases) into the eclipse dropins folder. Hereafter start eclipse in a clean mode to refresh the installation.
+Currently the plug in must be installed manually. To do this, copy the `catch-testrunner.jar` (see releases) into the eclipse dropins folder. Hereafter start eclipse in a clean mode to refresh the installation.
 
 ```
-cp catch-tester.jar <path/to/eclipse>/dropins
+cp catch-testrunner.jar <path/to/eclipse>/dropins/.
 eclipse -clean
 ```
 If you need root rights (eclipse is installed in /usr/lib/eclipse), prefix the command sudo.
