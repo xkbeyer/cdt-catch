@@ -24,8 +24,11 @@
 
 package org.eclipse.cdt.testsrunner.internal.catch_test;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -41,18 +44,28 @@ import org.xml.sax.SAXException;
  */
 public class CatchTestsRunnerProvider implements ITestsRunnerProvider {
 
+   static private File tempOutFileName = null;
+   
    @Override
    public String[] getAdditionalLaunchParameters(String[][] testPaths) throws TestingException {
       final String[] catchParameters = { 
             "--success",        //$NON-NLS-1$
             "--reporter xml",   //$NON-NLS-1$
             "--durations yes",  //$NON-NLS-1$
+            "--out "            //$NON-NLS-1$
       };
       
       // Build tests filter
       if(testPaths != null && testPaths.length != 0) {
          throw new TestingException(CatchTestsRunnerMessages.CatchTestsRunner_wrong_tests_paths_count);
       }
+      try {
+         tempOutFileName = File.createTempFile("catch-", ".out");
+         catchParameters[3] = "--out " + tempOutFileName;
+      } catch(IOException e) {
+         throw new TestingException(e.getMessage());
+      }
+
       return catchParameters;
    }
 
@@ -72,7 +85,10 @@ public class CatchTestsRunnerProvider implements ITestsRunnerProvider {
    @Override
    public void run(ITestModelUpdater modelUpdater, InputStream inputStream) throws TestingException {
       try {
-         CatchXmlOutputHandler handler = new CatchXmlOutputHandler(inputStream, modelUpdater);
+         InputStream input = Files.newInputStream(tempOutFileName.toPath(), StandardOpenOption.READ);
+         CatchXmlOutputHandler handler = new CatchXmlOutputHandler(input, modelUpdater);
+         // Empty input stream in order to stop the test executable and have the temp out file complete.
+         while(inputStream.read() != -1);
          handler.run();
       } catch(IOException e) {
          throw new TestingException(getErrorText(CatchTestsRunnerMessages.CatchTestsRunner_io_error_prefix, e.getMessage()));
@@ -80,6 +96,9 @@ public class CatchTestsRunnerProvider implements ITestsRunnerProvider {
          throw new TestingException(e.getMessage());
       } catch(SAXException e) {
          throw new TestingException(e.getMessage());
+      } finally {
+         tempOutFileName.delete();
+         tempOutFileName = null;
       }
    }
 }
